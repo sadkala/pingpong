@@ -12,7 +12,7 @@ class MLPlay:
         self.previous_ball = (0, 0)
         self.pred = 100
 
-        if self.size == "1P":
+        if self.side == "1P":
             with open(os.path.join(os.path.dirname(__file__),'save','model1.pickle'),'rb') as f:
                 self.model = pickle.load(f)
         else:

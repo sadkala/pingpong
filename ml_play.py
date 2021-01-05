@@ -54,12 +54,20 @@ class MLPlay:
                 self.pred = abs(self.pred)
 
             # 判斷command
-            if scene_info["platform_1P"][0]+20 - 5 > self.pred :
-                command = "MOVE_LEFT"
-            elif scene_info["platform_1P"][0]+20 + 5 < self.pred : 
-                command = "MOVE_RIGHT"
-            else :
-                command = "NONE"
+            if self.side == "1P":
+                if scene_info["platform_1P"][0]+20 - 5 > self.pred :
+                    command = "MOVE_LEFT"
+                elif scene_info["platform_1P"][0]+20 + 5 < self.pred : 
+                    command = "MOVE_RIGHT"
+                else :
+                    command = "NONE"
+            if self.side == "2P":
+                if scene_info["platform_2P"][0]+20 - 5 > self.pred :
+                    command = "MOVE_LEFT"
+                elif scene_info["platform_2P"][0]+20 + 5 < self.pred : 
+                    command = "MOVE_RIGHT"
+                else :
+                    command = "NONE"
 
         self.previous_ball = scene_info["ball"]
         return command

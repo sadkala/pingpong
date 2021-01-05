@@ -3,14 +3,22 @@ The template of the main script of the machine learning process
 """
 
 class MLPlay:
-    def __init__(self):
+    def __init__(self,side):
         """
         Constructor
         """
         self.ball_served = False
+        self.side = side
         self.previous_ball = (0, 0)
         self.pred = 100
 
+        if self.size == "1P":
+            with open(os.path.join(os.path.dirname(__file__),'save','model1.pickle'),'rb') as f:
+                self.model = pickle.load(f)
+        else:
+            with open(os.path.join(os.path.dirname(__file__),'save','model.pickle'),'rb') as f:
+                self.model = pickle.load(f)
+                         
     def update(self, scene_info):
         """
         Generate the command according to the received `scene_info`.

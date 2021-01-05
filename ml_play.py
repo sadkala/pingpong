@@ -1,76 +1,82 @@
 """
-The template of the main script of the machine learning process
+The template of the script for the machine learning process in game pingpong
+
 """
-import os
-import pickle
+import pickle, os
+import numpy as np
 
 class MLPlay:
-    def __init__(self,side):
+    def __init__(self, side):
         """
         Constructor
+
+        @param side A string "1P" or "2P" indicates that the `MLPlay` is used by
+               which side.
         """
         self.ball_served = False
         self.side = side
-        self.previous_ball = (0, 0)
-        self.pred = 100
-
+        # Need scikit-learn==0.22.2 
         if self.side == "1P":
-            with open(os.path.join(os.path.dirname(__file__),'save','model1.pickle'),'rb') as f:
+            with open(os.path.join(os.path.dirname(__file__),'save','model.pickle'), 'rb') as f:
                 self.model = pickle.load(f)
         else:
-            with open(os.path.join(os.path.dirname(__file__),'save','model.pickle'),'rb') as f:
+            with open(os.path.join(os.path.dirname(__file__),'save','model1.pickle'), 'rb') as f:
                 self.model = pickle.load(f)
-                         
+
     def update(self, scene_info):
         """
-        Generate the command according to the received `scene_info`.
+        Generate the command according to the received scene information
         """
-        # Make the caller to invoke `reset()` for the next round.
-        if (scene_info["status"] == "GAME_OVER" or
-            scene_info["status"] == "GAME_PASS"):
+        if scene_info["status"] != "GAME_ALIVE":
             return "RESET"
 
         if not self.ball_served:
             self.ball_served = True
-            self.previous_ball = scene_info["ball"]
-            command = "SERVE_TO_LEFT" # 發球
-            
+            return "SERVE_TO_LEFT"
         else:
-            # rule code
-            self.pred = 100
-            if self.previous_ball[1]-scene_info["ball"][1] > 0: # 球正在往上
-                pass
-            else :  # 球正在往下，判斷球的落點
-                self.pred = scene_info["ball"][0] + ((400 - scene_info["ball"][1]) // 7 ) * (scene_info["ball"][0]- self.previous_ball[0])
-            
-            # 調整predict值
-            if self.pred > 400:  #大於 400
-                self.pred = self.pred - 400
-            elif self.pred < 400 and self.pred >200 :  #200 到 400 間
-                self.pred = 200 - (self.pred -200 )
-            elif self.pred < -200:  #小於 200
-                self.pred = 200 - (abs(self.pred) - 200)
-            elif self.pred > -200 and self.pred < 0 :  # 0 到 -200 間
-                self.pred = abs(self.pred)
-
-            # 判斷command
             if self.side == "1P":
-                if scene_info["platform_1P"][0]+20 - 5 > self.pred :
-                    command = "MOVE_LEFT"
-                elif scene_info["platform_1P"][0]+20 + 5 < self.pred : 
-                    command = "MOVE_RIGHT"
+                if scene_info["ball_speed"][1] > 0 :
+                    if scene_info["ball_speed"][0] > 0:
+                        direction = 0
+                    else :
+                        direction = 1
                 else :
-                    command = "NONE"
-            if self.side == "2P":
-                if scene_info["platform_2P"][0]+20 - 5 > self.pred :
-                    command = "MOVE_LEFT"
-                elif scene_info["platform_2P"][0]+20 + 5 < self.pred : 
-                    command = "MOVE_RIGHT"
+                    if scene_info["ball_speed"][0] > 0:
+                        direction = 2
+                    else:
+                        direction = 3
+                X = [scene_info["ball"][0], scene_info["ball"][1], direction, scene_info["blocker"][0],scene_info["ball_speed"][0],scene_info["ball_speed"][1]]
+                X = np.array(X).reshape((1,-1))
+                pred = self.model.predict(X)
+                if scene_info["platform_1P"][0]+20  > (pred-10)and scene_info["platform_1P"][0]+20 < (pred+10):
+                    if scene_info["platform_1P"][1]+30-scene_info["ball_speed"][1] > scene_info["ball"][1] : #slice
+                        return "NONE"
+                    else :
+                        return "NONE" # NONE
+                elif scene_info["platform_1P"][0]+20 <= (pred-10) : return "MOVE_RIGHT" # goes right
+                else : return "MOVE_LEFT" # goes left
+            elif self.side == "2P":
+                if scene_info["ball_speed"][1] > 0 :
+                    if scene_info["ball_speed"][0] > 0:
+                        direction = 0
+                    else :
+                        direction = 1
                 else :
-                    command = "NONE"
+                    if scene_info["ball_speed"][0] > 0:
+                        direction = 2
+                    else:
+                        direction = 3
+                X = [scene_info["ball"][0], scene_info["ball"][1], direction, scene_info["blocker"][0],scene_info["ball_speed"][0],scene_info["ball_speed"][1]]
+                X = np.array(X).reshape((1,-1))
+                pred = self.model.predict(X)
+                if scene_info["platform_2P"][0]+20  > (pred-10)and scene_info["platform_2P"][0]+20 < (pred+10):
+                    if scene_info["platform_2P"][1]+30-scene_info["ball_speed"][1] > scene_info["ball"][1] : #slice
+                        return "NONE"
+                    else :
+                        return "NONE" # NONE
+                elif scene_info["platform_2P"][0]+20 <= (pred-10) : return "MOVE_RIGHT" # goes right
+                else : return "MOVE_LEFT" # goes left
 
-        self.previous_ball = scene_info["ball"]
-        return command
 
     def reset(self):
         """

@@ -54,9 +54,9 @@ class MLPlay:
                 self.pred = abs(self.pred)
 
             # 判斷command
-            if scene_info["platform"][0]+20 - 5 > self.pred :
+            if scene_info["platform_1P"][0]+20 - 5 > self.pred :
                 command = "MOVE_LEFT"
-            elif scene_info["platform"][0]+20 + 5 < self.pred : 
+            elif scene_info["platform_1P"][0]+20 + 5 < self.pred : 
                 command = "MOVE_RIGHT"
             else :
                 command = "NONE"

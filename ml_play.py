@@ -1,6 +1,7 @@
 """
 The template of the main script of the machine learning process
 """
+import os
 
 class MLPlay:
     def __init__(self,side):
